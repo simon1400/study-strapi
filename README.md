@@ -1,6 +1,6 @@
 # study-strapi
 
-Strapi v5 CMS для [studycz.cz](https://studycz.cz) — API на `api.studycz.cz`.
+Strapi v5 CMS для [studycz.cz](https://studycz.cz) — живёт на `admin.studycz.cz`.
 Часть модернизации 2026 (миграция с Sanity + MongoDB/Netlify); план — `docs/migration-plan-2026.md`
 в старом репозитории `studycz`.
 
@@ -31,5 +31,5 @@ npm run develop
 
 - Клон в `/opt/studycz-strapi`, pm2 через `ecosystem.config.js` (порт 1341, имя `studycz-strapi`)
 - `git pull && npm install && npm run build && pm2 reload studycz-strapi`
-- nginx: `api.studycz.cz` → 127.0.0.1:1341, certbot
+- nginx: `admin.studycz.cz` → 127.0.0.1:1341, certbot
 - Скрипты миграции контента: `scripts/` (Sanity → Strapi, MongoDB → Strapi)
