@@ -1,0 +1,26 @@
+{
+  "collectionName": "components_shared_people",
+  "info": {
+    "displayName": "Person",
+    "icon": "user",
+    "description": "Сотрудник на странице контактов"
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "email": {
+      "type": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": ["images"]
+    }
+  }
+}

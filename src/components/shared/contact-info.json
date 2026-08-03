@@ -1,0 +1,17 @@
+{
+  "collectionName": "components_shared_contact_infos",
+  "info": {
+    "displayName": "Contact info",
+    "icon": "phone",
+    "description": "Блок контакта филиала: тип + значение (richtext)"
+  },
+  "options": {},
+  "attributes": {
+    "type": {
+      "type": "string"
+    },
+    "value": {
+      "type": "richtext"
+    }
+  }
+}

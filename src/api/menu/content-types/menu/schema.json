@@ -1,0 +1,36 @@
+{
+  "kind": "collectionType",
+  "collectionName": "menus",
+  "info": {
+    "singularName": "menu",
+    "pluralName": "menus",
+    "displayName": "Menu",
+    "description": "Меню сайта (location: шапка, футеры, сайдбар)"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "location": {
+      "type": "enumeration",
+      "enum": ["menu_top", "menu_footer_1", "menu_footer_2", "menu_footer_3", "sidebar"],
+      "required": true,
+      "unique": true
+    },
+    "items": {
+      "type": "component",
+      "component": "shared.menu-link",
+      "repeatable": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    }
+  }
+}

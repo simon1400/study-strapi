@@ -1,0 +1,17 @@
+{
+  "collectionName": "components_shared_parametrs",
+  "info": {
+    "displayName": "Parametr",
+    "icon": "layer",
+    "description": "Пара значение/подпись (например «560 часов» / «чешского языка»)"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    }
+  }
+}

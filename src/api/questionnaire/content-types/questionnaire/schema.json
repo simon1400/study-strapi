@@ -1,0 +1,38 @@
+{
+  "kind": "collectionType",
+  "collectionName": "questionnaires",
+  "info": {
+    "singularName": "questionnaire",
+    "pluralName": "questionnaires",
+    "displayName": "Questionnaire",
+    "description": "Анкета студента (6 шагов, структура шагов — JSON, 1:1 со старым сайтом)"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "step1": {
+      "type": "json"
+    },
+    "step2": {
+      "type": "json"
+    },
+    "step3": {
+      "type": "json"
+    },
+    "step4": {
+      "type": "json"
+    },
+    "step5": {
+      "type": "json"
+    },
+    "step6": {
+      "type": "json"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    }
+  }
+}

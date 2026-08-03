@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_shared_menu_links",
+  "info": {
+    "displayName": "Menu link",
+    "icon": "link",
+    "description": "Пункт меню"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "url": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "collectionName": "components_shared_text_items",
+  "info": {
+    "displayName": "Text item",
+    "icon": "bulletList",
+    "description": "Один пункт текстового списка (benefits, faculties, include/notInclude и т.п.)"
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "text",
+      "required": true
+    }
+  }
+}

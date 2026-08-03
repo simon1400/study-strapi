@@ -1,0 +1,39 @@
+{
+  "kind": "singleType",
+  "collectionName": "globals",
+  "info": {
+    "singularName": "global",
+    "pluralName": "globals",
+    "displayName": "Global",
+    "description": "Сайт-wide настройки: название, контакты, соцсети"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "contacts": {
+      "type": "component",
+      "component": "shared.contact-details",
+      "repeatable": false
+    },
+    "socLinks": {
+      "type": "component",
+      "component": "shared.soc-links",
+      "repeatable": false
+    }
+  }
+}

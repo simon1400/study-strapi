@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "call_requests",
+  "info": {
+    "singularName": "call-request",
+    "pluralName": "call-requests",
+    "displayName": "Call request",
+    "description": "Заявки «перезвоните мне»"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "phone": {
+      "type": "string",
+      "required": true
+    },
+    "time": {
+      "type": "string"
+    },
+    "done": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

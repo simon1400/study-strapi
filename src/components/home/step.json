@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_home_steps",
+  "info": {
+    "displayName": "Step",
+    "icon": "arrowRight",
+    "description": "Шаг «как это работает» на главной"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "content": {
+      "type": "text"
+    }
+  }
+}

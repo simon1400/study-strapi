@@ -1,0 +1,20 @@
+{
+  "collectionName": "components_shared_soc_links",
+  "info": {
+    "displayName": "Social links",
+    "icon": "earth",
+    "description": "Ссылки на соцсети"
+  },
+  "options": {},
+  "attributes": {
+    "facebook": {
+      "type": "string"
+    },
+    "instagram": {
+      "type": "string"
+    },
+    "vkontakte": {
+      "type": "string"
+    }
+  }
+}
