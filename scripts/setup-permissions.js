@@ -13,8 +13,8 @@
  *   node scripts/setup-permissions.js          # включить чтение
  *   node scripts/setup-permissions.js --list   # только показать текущее состояние
  *
- * Приватные типы (анкеты пользователя, заявки на звонок) НЕ открываем —
- * формы и ЛК идут через JWT/собственные ручки на этапах 5–6.
+ * Анкеты пользователя и заявки на звонок на чтение НЕ открываем: у заявки
+ * публичен только create (форма на главной), остальное — через JWT на этапах 5–6.
  */
 
 const { bootStrapi } = require('./lib/strapi-app');
@@ -23,13 +23,19 @@ const PRIVATE_APIS = new Set(['api::questionnaire', 'api::call-request']);
 const READ_ACTIONS = new Set(['find', 'findOne']);
 
 /**
+ * Кроме чтения: форма «Заказать звонок» на главной создаёт заявку без авторизации
+ * (раньше это делала Netlify-лямбда callCreate). Читать заявки анониму по-прежнему нельзя.
+ */
+const EXTRA_ACTIONS = new Set(['api::call-request.call-request.create']);
+
+/**
  * Реальные id прав content-api в формате `api::<api>.<controller>.<action>`
  * (для single type у контроллера есть только find).
  */
 function collectActions(app) {
   const registry = app.plugin('users-permissions').service('users-permissions').getActions();
   const all = [];
-  const read = [];
+  const granted = [];
 
   for (const [apiName, { controllers }] of Object.entries(registry)) {
     if (!apiName.startsWith('api::')) continue;
@@ -37,12 +43,13 @@ function collectActions(app) {
       for (const action of Object.keys(actions)) {
         const id = `${apiName}.${controller}.${action}`;
         all.push(id);
-        if (READ_ACTIONS.has(action) && !PRIVATE_APIS.has(apiName)) read.push(id);
+        const isPublicRead = READ_ACTIONS.has(action) && !PRIVATE_APIS.has(apiName);
+        if (isPublicRead || EXTRA_ACTIONS.has(id)) granted.push(id);
       }
     }
   }
 
-  return { all: new Set(all), read: read.sort() };
+  return { all: new Set(all), granted: granted.sort() };
 }
 
 async function main() {
@@ -58,8 +65,8 @@ async function main() {
     });
     const have = new Set(existing.map((p) => p.action));
 
-    const { all, read } = collectActions(app);
-    const missing = read.filter((action) => !have.has(action));
+    const { all, granted } = collectActions(app);
+    const missing = granted.filter((action) => !have.has(action));
     const stale = existing.filter((p) => p.action.startsWith('api::') && !all.has(p.action));
 
     if (listOnly) {
@@ -81,7 +88,7 @@ async function main() {
     }
 
     console.log(
-      `Готово: на чтение ${read.length} прав (добавлено ${missing.length}, удалено невалидных ${stale.length}).`
+      `Готово: public-роли положено ${granted.length} прав (добавлено ${missing.length}, удалено невалидных ${stale.length}).`
     );
   } finally {
     // на postgres app.destroy() иногда роняет knex уже после работы — см. scripts/README.md
