@@ -25,6 +25,7 @@ export interface HomeService extends Struct.ComponentSchema {
     content: Schema.Attribute.Text;
     image: Schema.Attribute.Media<'images'>;
     title: Schema.Attribute.String;
+    url: Schema.Attribute.String;
   };
 }
 
@@ -64,6 +65,19 @@ export interface SharedContactInfo extends Struct.ComponentSchema {
   attributes: {
     type: Schema.Attribute.String;
     value: Schema.Attribute.RichText;
+  };
+}
+
+export interface SharedFaculty extends Struct.ComponentSchema {
+  collectionName: 'components_shared_faculties';
+  info: {
+    description: '\u0424\u0430\u043A\u0443\u043B\u044C\u0442\u0435\u0442 \u0443\u043D\u0438\u0432\u0435\u0440\u0441\u0438\u0442\u0435\u0442\u0430 + \u0441\u043F\u0438\u0441\u043E\u043A \u0441\u043F\u0435\u0446\u0438\u0430\u043B\u044C\u043D\u043E\u0441\u0442\u0435\u0439';
+    displayName: 'Faculty';
+    icon: 'book';
+  };
+  attributes: {
+    specializations: Schema.Attribute.Component<'shared.text-item', true>;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
   };
 }
 
@@ -118,6 +132,7 @@ export interface SharedPerson extends Struct.ComponentSchema {
     image: Schema.Attribute.Media<'images'>;
     name: Schema.Attribute.String & Schema.Attribute.Required;
     phone: Schema.Attribute.String;
+    position: Schema.Attribute.String;
   };
 }
 
@@ -155,6 +170,7 @@ declare module '@strapi/strapi' {
       'home.step': HomeStep;
       'shared.contact-details': SharedContactDetails;
       'shared.contact-info': SharedContactInfo;
+      'shared.faculty': SharedFaculty;
       'shared.menu-link': SharedMenuLink;
       'shared.parametr': SharedParametr;
       'shared.period': SharedPeriod;

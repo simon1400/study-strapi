@@ -1011,6 +1011,12 @@ export interface ApiProgramProgram extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    includeAdditional: Schema.Attribute.Component<'shared.text-item', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     includeAfter: Schema.Attribute.Component<'shared.text-item', true> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1175,7 +1181,14 @@ export interface ApiUniversityUniversity extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    faculties: Schema.Attribute.Component<'shared.text-item', true> &
+    faculties: Schema.Attribute.Component<'shared.faculty', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    facultyImage: Schema.Attribute.Media<'images'>;
+    facultyTitle: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;

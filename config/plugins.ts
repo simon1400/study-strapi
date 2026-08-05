@@ -25,9 +25,16 @@ const deniedExecutableTypes = [
 const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin => ({
   'users-permissions': {
     config: {
-      jwtManagement: 'refresh',
-      sessions: {
-        httpOnly: true,
+      /**
+       * Сессию личного кабинета держит Next.js: JWT лежит в httpOnly secure
+       * куке на studycz.cz, браузер со Strapi напрямую не разговаривает.
+       * Поэтому режим refresh-токенов не нужен — с ним access живёт 10 минут,
+       * а ротацию пришлось бы делать в middleware (и ловить гонки при
+       * параллельных запросах). `legacy-support` отдаёт обычный JWT на 30 дней.
+       */
+      jwtManagement: 'legacy-support',
+      jwt: {
+        expiresIn: '30d',
       },
     },
   },
