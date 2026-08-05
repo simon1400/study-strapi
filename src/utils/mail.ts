@@ -143,21 +143,42 @@ export function callRequestMail(name: string, phone: string, time?: string | nul
   };
 }
 
+/** Сколько ждём отправку, прежде чем считать её неудачной и отвечать пользователю. */
+const SEND_TIMEOUT_MS = 15_000;
+
+type MailStrapi = {
+  log: { info: (m: string) => void; warn: (m: string) => void };
+  plugin: (n: string) => { service: (s: string) => { send: (m: MailInput) => Promise<unknown> } };
+};
+
 /**
- * Отправка, которая никогда не бросает наверх: письмо — побочный эффект,
- * из-за него не должна падать регистрация или заявка на звонок.
+ * Отправка, которая никогда не бросает наверх и никогда не висит: письмо —
+ * побочный эффект, из-за него не должна падать или тормозить регистрация.
+ *
+ * Таймаут здесь страхует таймауты SMTP из `config/plugins.ts`: если провайдер
+ * почему-то не уложился, запрос всё равно вернётся, а человек получит пароль
+ * на экране вместо письма.
  */
-export async function sendMail(strapi: { log: { info: (m: string) => void; warn: (m: string) => void }; plugin: (n: string) => { service: (s: string) => { send: (m: MailInput) => Promise<unknown> } } }, mail: MailInput): Promise<boolean> {
+export async function sendMail(strapi: MailStrapi, mail: MailInput): Promise<boolean> {
   if (!process.env.RESEND_API_KEY) {
     strapi.log.info(`[mail] пропущено «${mail.subject}» → ${mail.to}: RESEND_API_KEY не задан`);
     return false;
   }
+
+  const started = Date.now();
   try {
-    await strapi.plugin('email').service('email').send(mail);
-    strapi.log.info(`[mail] отправлено «${mail.subject}» → ${mail.to}`);
+    await Promise.race([
+      strapi.plugin('email').service('email').send(mail),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`таймаут ${SEND_TIMEOUT_MS} мс`)), SEND_TIMEOUT_MS)
+      ),
+    ]);
+    strapi.log.info(`[mail] отправлено «${mail.subject}» → ${mail.to} (${Date.now() - started} мс)`);
     return true;
   } catch (error) {
-    strapi.log.warn(`[mail] не отправлено «${mail.subject}» → ${mail.to}: ${(error as Error).message}`);
+    strapi.log.warn(
+      `[mail] не отправлено «${mail.subject}» → ${mail.to} (${Date.now() - started} мс): ${(error as Error).message}`
+    );
     return false;
   }
 }

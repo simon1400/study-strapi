@@ -43,8 +43,15 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
    * пароль — API-ключ). Отсюда уходят письмо с паролем после регистрации,
    * уведомления админу и штатное восстановление пароля users-permissions.
    *
-   * Без ключа плагин остаётся на дефолтном sendmail: локальная разработка
-   * не должна требовать доступа к Resend, письма там просто не уходят.
+   * Порт **2465**, а не привычный 465: Hetzner режет исходящие 25 и 465,
+   * и соединение просто виснет до таймаута nginx. У Resend 2465 — тот же
+   * implicit TLS, только на открытом порту (ещё открыты 587 и 2587).
+   *
+   * Таймауты обязательны: без них зависший SMTP держит http-запрос до упора,
+   * и регистрация отваливается 504-й вместо того, чтобы пройти без письма.
+   *
+   * Без ключа блок не подключается вовсе и Strapi остаётся на дефолтном
+   * sendmail: локальная разработка не должна требовать доступа к Resend.
    */
   ...(env('RESEND_API_KEY', '')
     ? {
@@ -53,12 +60,15 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
             provider: 'nodemailer',
             providerOptions: {
               host: env('SMTP_HOST', 'smtp.resend.com'),
-              port: env.int('SMTP_PORT', 465),
-              secure: true,
+              port: env.int('SMTP_PORT', 2465),
+              secure: env.bool('SMTP_SECURE', true),
               auth: {
                 user: env('SMTP_USER', 'resend'),
                 pass: env('RESEND_API_KEY'),
               },
+              connectionTimeout: 8000,
+              greetingTimeout: 8000,
+              socketTimeout: 12000,
             },
             settings: {
               defaultFrom: env('MAIL_FROM', 'Study in the Czech Republic <noreply@studycz.cz>'),
