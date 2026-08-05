@@ -156,14 +156,24 @@ Content-types (маппинг из Sanity, все контентные — с i1
       `home.service.url`, `shared.person.position`
 - Не переносится: sanity-тип `question` — тестовый дубль faq с мусорным текстом
 
-### Этап 4 — Next.js: перенос фронта
-- App Router, структура: `app/[locale]/(site)/{page,program,university,living,blog,...}`
-- Роуты 1:1 со старыми URL: `/`, `/program`, `/program/[slug]`, `/university`, `/university/[slug]`,
-  `/living`, `/living/[slug]`, `/blog`, `/blog/[slug]`, `/agents`, `/contacts`, `/services`, `/faq`, `/partners`, `/user/*`
-- Данные: fetch к Strapi в Server Components + **ISR** (revalidate) + webhook Strapi → revalidateTag
-- Вёрстка: перенос JSX и SCSS 1:1 (классовые → функциональные компоненты), UIkit оставляем
-- SEO: generateMetadata из Strapi-полей, sitemap.ts, robots.ts, hreflang, next/image для картинок
-- i18n: next-intl, локаль в URL (`/`, `/cz/...`), словари UI-строк
+### Этап 4 — Next.js: перенос фронта — **СДЕЛАН 2026-08-05** (публичные страницы)
+- [x] Права public-роли в Strapi: `study-strapi/scripts/setup-permissions.js` (идемпотентный,
+      прогнан локально и на проде). Чтение всех публичных типов + `create` у call-request;
+      анкеты и чтение заявок закрыты. **API-токен не понадобился.**
+- [x] Каркас: Next.js 15 App Router + TS в `d:\study-client`, UIkit 3.1.4, sass, next-intl, qs
+- [x] Роуты 1:1 со старыми URL: `/`, `/program`, `/program/[slug]`, `/university`, `/university/[slug]`,
+      `/living`, `/living/[slug]`, `/blog`, `/blog/[slug]`, `/agents`, `/contacts`, `/services`,
+      `/faq`, `/partners`, 404. `/user/*` — этап 5
+- [x] Данные: `src/lib/strapi.ts` (getCollection/getBySlug/getSingle/mediaUrl), ISR на час + теги,
+      вебхук на `POST /api/revalidate` (заголовок `x-revalidate-secret`)
+- [x] Вёрстка 1:1: `src/styles/theme.css` — старый бандл app.css (тема + UIkit), поверх style.scss
+      и постраничные `styles/legacy/*.scss`; react-animate-height заменён CSS-раскрытием
+- [x] SEO: generateMetadata из Strapi (global/страница), фавиконки, GTM + Яндекс.Метрика через next/script
+- [x] i18n: next-intl, `localePrefix: 'as-needed'`; активна одна локаль `ru` — переводов в Strapi
+      пока нет, добавление локали в `src/i18n/routing.ts` включает `/cz/...` без ломки русских URL
+- [ ] Осталось по этапу: sitemap.ts / robots.ts, hreflang (появится вместе со вторым языком),
+      next/image (сейчас `<img>` + трансформации ImageKit `?tr=w-…,h-…`, ближе к старой вёрстке
+      и не грузит VPS), секция «Наша медиатека» на Instagram Graph API
 
 ### Этап 5 — Личный кабинет и auth
 - Регистрация/логин через Strapi (`/api/auth/local`), JWT → **httpOnly secure cookie** (не localStorage)
