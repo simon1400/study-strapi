@@ -13,6 +13,9 @@
     "content": {
       "type": "text"
     },
+    "url": {
+      "type": "string"
+    },
     "image": {
       "type": "media",
       "multiple": false,

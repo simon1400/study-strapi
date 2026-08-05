@@ -11,6 +11,9 @@
       "type": "string",
       "required": true
     },
+    "position": {
+      "type": "string"
+    },
     "email": {
       "type": "email"
     },

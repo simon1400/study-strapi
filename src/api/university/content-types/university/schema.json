@@ -48,9 +48,18 @@
       "multiple": true,
       "allowedTypes": ["images"]
     },
+    "facultyTitle": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "facultyImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": ["images"]
+    },
     "faculties": {
       "type": "component",
-      "component": "shared.text-item",
+      "component": "shared.faculty",
       "repeatable": true,
       "pluginOptions": { "i18n": { "localized": true } }
     },

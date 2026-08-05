@@ -65,6 +65,12 @@
       "repeatable": true,
       "pluginOptions": { "i18n": { "localized": true } }
     },
+    "includeAdditional": {
+      "type": "component",
+      "component": "shared.text-item",
+      "repeatable": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
     "notInclude": {
       "type": "component",
       "component": "shared.text-item",
