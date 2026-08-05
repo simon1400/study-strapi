@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import type { Core } from '@strapi/strapi';
 import { errors } from '@strapi/utils';
+import { adminRegistrationMail, registrationMail, sendMail } from '../../../utils/mail';
 
 const { ApplicationError, ValidationError } = errors;
 
@@ -233,11 +234,19 @@ export default {
       data: { ...emptySteps(), user: user.id },
     });
 
+    // письма — побочный эффект: не отправились, регистрация всё равно состоялась
+    const passwordSent = await sendMail(strapi, registrationMail(email, password));
+    await sendMail(strapi, adminRegistrationMail({ ...profile, email }));
+
     ctx.body = {
       jwt: await issueJwt(strapi, user.id),
       user: pickPublicUser(user),
-      // одноразово: письмо с паролем появится на этапе 6
-      password,
+      /**
+       * Пароль возвращается клиенту только если письмо с ним НЕ ушло —
+       * тогда фронт покажет его в модалке, иначе войти второй раз будет нечем.
+       * Когда почта настроена, пароль наружу не отдаём вовсе.
+       */
+      password: passwordSent ? null : password,
     };
   },
 

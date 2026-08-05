@@ -35,6 +35,20 @@ const PUBLIC_EXTRA = new Set([
   'api::account.account.register',
 ]);
 
+/** Плагинные права роли public: вход и восстановление пароля. */
+const PUBLIC_PLUGIN = new Set([
+  'plugin::users-permissions.auth.callback',
+  'plugin::users-permissions.auth.forgotPassword',
+  'plugin::users-permissions.auth.resetPassword',
+]);
+
+/**
+ * Штатный `auth.register` роли public отключаем: регистрация идёт только через
+ * `account.register`, который заводит профиль и анкету. Через штатный можно было
+ * бы создать пользователя с одним лишь email — без имени, телефона и анкеты.
+ */
+const PUBLIC_REVOKE = new Set(['plugin::users-permissions.auth.register']);
+
 /**
  * Права роли authenticated. Плагинные (`plugin::`) тоже разрешены —
  * смена пароля из ЛК идёт штатным `POST /api/auth/change-password`.
@@ -68,11 +82,14 @@ function collectActions(app) {
     }
   }
 
-  return { all: new Set(all), publicGranted: publicGranted.sort() };
+  return { all: new Set(all), publicGranted: [...publicGranted, ...PUBLIC_PLUGIN].sort() };
 }
 
-/** Приводит права одной роли к списку `granted`: добавляет недостающие, чистит битые api::-права. */
-async function syncRole(app, type, granted, allActions, listOnly) {
+/**
+ * Приводит права одной роли к списку `granted`: добавляет недостающие, чистит
+ * битые api::-права и снимает те, что перечислены в `revoke`.
+ */
+async function syncRole(app, type, granted, allActions, listOnly, revoke = new Set()) {
   const role = await app.db.query('plugin::users-permissions.role').findOne({ where: { type } });
   if (!role) throw new Error(`Роль ${type} не найдена`);
 
@@ -82,13 +99,16 @@ async function syncRole(app, type, granted, allActions, listOnly) {
   const have = new Set(existing.map((p) => p.action));
 
   const missing = granted.filter((action) => !have.has(action));
-  const stale = existing.filter((p) => p.action.startsWith('api::') && !allActions.has(p.action));
+  const stale = [
+    ...existing.filter((p) => p.action.startsWith('api::') && !allActions.has(p.action)),
+    ...existing.filter((p) => revoke.has(p.action)),
+  ];
 
   if (listOnly) {
     console.log(`\nРоль ${type} (id ${role.id}), включено ${have.size} прав:`);
     for (const action of [...have].sort()) console.log(`  ✓ ${action}`);
     for (const action of missing) console.log(`  ✗ ${action} (не включено)`);
-    for (const p of stale) console.log(`  ! ${p.action} (нет такого действия)`);
+    for (const p of stale) console.log(`  ! ${p.action} (лишнее, будет снято)`);
     return;
   }
 
@@ -102,7 +122,7 @@ async function syncRole(app, type, granted, allActions, listOnly) {
     console.log(`  + ${action}`);
   }
   console.log(
-    `  итого положено ${granted.length} прав (добавлено ${missing.length}, удалено невалидных ${stale.length}).`
+    `  итого положено ${granted.length} прав (добавлено ${missing.length}, снято лишних ${stale.length}).`
   );
 }
 
@@ -113,7 +133,7 @@ async function main() {
   try {
     const { all, publicGranted } = collectActions(app);
 
-    await syncRole(app, 'public', publicGranted, all, listOnly);
+    await syncRole(app, 'public', publicGranted, all, listOnly, PUBLIC_REVOKE);
     await syncRole(app, 'authenticated', [...AUTHENTICATED].sort(), all, listOnly);
 
     if (!listOnly) console.log('\nГотово.');

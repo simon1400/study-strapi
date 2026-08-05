@@ -38,6 +38,36 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
       },
     },
   },
+  /**
+   * Почта — Resend по SMTP (host smtp.resend.com, логин всегда `resend`,
+   * пароль — API-ключ). Отсюда уходят письмо с паролем после регистрации,
+   * уведомления админу и штатное восстановление пароля users-permissions.
+   *
+   * Без ключа плагин остаётся на дефолтном sendmail: локальная разработка
+   * не должна требовать доступа к Resend, письма там просто не уходят.
+   */
+  ...(env('RESEND_API_KEY', '')
+    ? {
+        email: {
+          config: {
+            provider: 'nodemailer',
+            providerOptions: {
+              host: env('SMTP_HOST', 'smtp.resend.com'),
+              port: env.int('SMTP_PORT', 465),
+              secure: true,
+              auth: {
+                user: env('SMTP_USER', 'resend'),
+                pass: env('RESEND_API_KEY'),
+              },
+            },
+            settings: {
+              defaultFrom: env('MAIL_FROM', 'Study in the Czech Republic <noreply@studycz.cz>'),
+              defaultReplyTo: env('MAIL_REPLY_TO', 'info@studycz.cz'),
+            },
+          },
+        },
+      }
+    : {}),
   upload: {
     config: {
       security: {
