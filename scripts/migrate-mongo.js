@@ -209,7 +209,9 @@ async function main() {
       for (const warning of warnings) console.log(`  - ${warning}`);
     }
   } finally {
-    await app.destroy();
+    // на postgres пул иногда отваливается с "aborted" уже после всей работы —
+    // это не должно ронять успешную миграцию
+    await app.destroy().catch((error) => console.warn(`(destroy: ${error.message})`));
   }
 }
 

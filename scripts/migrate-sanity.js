@@ -528,7 +528,9 @@ async function main() {
       if (migrator.warnings.length > 40) log(`  ... ещё ${migrator.warnings.length - 40}`);
     }
   } finally {
-    await app.destroy();
+    // на postgres пул иногда отваливается с "aborted" уже после всей работы —
+    // это не должно ронять успешную миграцию
+    await app.destroy().catch((error) => console.warn(`(destroy: ${error.message})`));
   }
 }
 
