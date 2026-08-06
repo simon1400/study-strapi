@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 import type { Core } from '@strapi/strapi';
 
 const allowedMediaTypes = [
@@ -39,16 +41,13 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
     },
   },
   /**
-   * Почта — Resend по SMTP (host smtp.resend.com, логин всегда `resend`,
-   * пароль — API-ключ). Отсюда уходят письмо с паролем после регистрации,
-   * уведомления админу и штатное восстановление пароля users-permissions.
+   * Почта — Resend через HTTP API (локальный провайдер `providers/email-resend`).
+   * Отсюда уходят письмо с паролем после регистрации, уведомления админу
+   * и штатное восстановление пароля users-permissions.
    *
-   * Порт **2465**, а не привычный 465: Hetzner режет исходящие 25 и 465,
-   * и соединение просто виснет до таймаута nginx. У Resend 2465 — тот же
-   * implicit TLS, только на открытом порту (ещё открыты 587 и 2587).
-   *
-   * Таймауты обязательны: без них зависший SMTP держит http-запрос до упора,
-   * и регистрация отваливается 504-й вместо того, чтобы пройти без письма.
+   * SMTP Resend не используем: их приём портил quoted-printable — `=` в теле
+   * съедался вместе с двумя hex-символами, и ссылка сброса пароля приходила
+   * с битым токеном (подробности в providers/email-resend/index.js).
    *
    * Без ключа блок не подключается вовсе и Strapi остаётся на дефолтном
    * sendmail: локальная разработка не должна требовать доступа к Resend.
@@ -57,18 +56,9 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
     ? {
         email: {
           config: {
-            provider: 'nodemailer',
+            provider: path.join(process.cwd(), 'providers', 'email-resend'),
             providerOptions: {
-              host: env('SMTP_HOST', 'smtp.resend.com'),
-              port: env.int('SMTP_PORT', 2465),
-              secure: env.bool('SMTP_SECURE', true),
-              auth: {
-                user: env('SMTP_USER', 'resend'),
-                pass: env('RESEND_API_KEY'),
-              },
-              connectionTimeout: 8000,
-              greetingTimeout: 8000,
-              socketTimeout: 12000,
+              apiKey: env('RESEND_API_KEY'),
             },
             settings: {
               defaultFrom: env('MAIL_FROM', 'Study in the Czech Republic <noreply@studycz.cz>'),
