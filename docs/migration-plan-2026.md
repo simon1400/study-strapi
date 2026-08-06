@@ -64,12 +64,14 @@ Instagram-блок скрываем (воскресим позже через Gr
       `questions-preview.json`, `DB_URL.txt`). Единственная БД кластера — `test`. Данных мало:
       **5 users** (пароли plaintext `scz_*`, один тестовый «Ivan Test»), **5 questions** (заполнена 1 анкета,
       остальные пустые), **0 calls**, **0 sessions**. Переносим всех, объём тривиальный.
-- [ ] Аккаунт Resend + верификация домена studycz.cz (SPF/DKIM/DMARC записи)
+- [x] Аккаунт Resend + верификация домена studycz.cz — **сделано 2026-08-06**: SPF+MX на
+      `send.studycz.cz`, DKIM `resend._domainkey`; письма реально доходят во «Входящие»
 - [x] DNS: зона перенесена на Wedos (NS ns.wedos.*, было dns1–4.p08.nsone.net) и применена 2026-08-03.
       `admin.studycz.cz` → 157.90.169.205 ✓, MX yandex и TXT-верификации на месте.
       **Решение юзера (2026-08-05): с Netlify уходим совсем — apex и www остаются на VPS,
       старый сайт намеренно лежит до запуска нового фронта. Возврат на Netlify-IP не делаем.**
-      Осталось на юзере: TXT `v=spf1 redirect=_spf.yandex.net`; заменить lowercase-токен
+      SPF Яндекса на апексе отменён (2026-08-06): корпоративная почта переедет с Яндекса
+      на Wedos, SPF добавится тогда. Осталось на юзере: заменить lowercase-токен
       google-site-verification на оригинал `kCdhquuqnxGSVwEUlg8MUmt9T8yvrNLn2_eXmkjleR8`
 - [x] Языки утверждены: **uk, ru, cz, en** (ru — базовая локаль, весь старый контент импортируется в неё)
 - [x] **Два отдельных репозитория** созданы 2026-08-03 (имена по факту: **`study-strapi`** и **`study-client`**,
@@ -82,7 +84,13 @@ Instagram-блок скрываем (воскресим позже через Gr
 порт 1341 + pm2 save, nginx `studycz-strapi` → admin.studycz.cz + certbot (https 200), бэкап-скрипт
 + cron 3:35, админ создан CLI (pechunka11@gmail.com, пароль в `/root/.studycz_admin_pw`).
 **ImageKit подключён 2026-08-05** (ключи в .env, endpoint ik.imagekit.io/5sygns5ep, тестовый
-upload проверен). Осталось: client-часть (после этапа 4).
+upload проверен).
+**Client-часть СДЕЛАНА 2026-08-06 — https://studycz.cz публичен**: клон `/opt/studycz-client`,
+.env (STRAPI_URL=127.0.0.1:1341, REVALIDATE_SECRET), pm2 `studycz-client` порт **1342**
+(НЕ standalone — обычный `next start`, решение в next.config.ts) + pm2 save, nginx
+`studycz-client` (апекс → 1342, www → 301 апекс) + certbot, вебхук revalidate в
+`strapi_webhooks` проверен. Смоук: 75 URL sitemap → 200, формы, регистрация с письмом,
+вход, анкета, восстановление пароля end-to-end; смоук-данные удалены.
 
 Сервер уже готов: Ubuntu 24.04, Node 20.19.5, pm2, nginx + certbot, PostgreSQL 16. Ничего не ставим,
 только добавляем проект по существующему паттерну:
@@ -224,9 +232,11 @@ Content-types (маппинг из Sanity, все контентные — с i1
       `#modal-forgot` и страница `/reset-password?code=…`, код одноразовый
 - [x] `auth.register` у роли public снят: регистрация только через `account.register`,
       иначе можно было бы завести пользователя без профиля и анкеты
-- [ ] **На юзере: верифицировать домен studycz.cz на resend.com/domains** (добавить в Wedos
-      выданные DKIM/SPF-записи). До этого письма с `@studycz.cz` отбиваются с
-      «domain is not verified», и человек видит пароль в модалке вместо письма
+- [x] ~~На юзере: верифицировать домен studycz.cz на resend.com/domains~~ — сделано 2026-08-06,
+      письма доходят. **Заодно найден и обойдён баг Resend** (`b3af4a2`+`6e2be19`): их конвейер
+      не экранирует `=` в quoted-printable-частях — `=XX` съедался и ссылка сброса приходила
+      с битым токеном. Почта переведена со SMTP на HTTP API (локальный провайдер
+      `providers/email-resend/index.js`), опасные `=` в html заменяются на `&#61;`
 
 ### Этап 7 — Аналитика и GDPR
 - GTM + GA4 через `@next/third-parties`; события форм (регистрация, звонок)
@@ -234,7 +244,7 @@ Content-types (маппинг из Sanity, все контентные — с i1
 - Пиксели (Meta и др.) — через GTM после consent
 
 ### Этап 8 — Запуск и вывод старого
-- [ ] Прогон: Lighthouse, проверка всех URL по списку из Sanity, формы, письма, ЛК
+- [ ] Прогон: URL/формы/письма/ЛК прогнаны 2026-08-06 при деплое клиента; остался **Lighthouse**
 - [ ] 301-редиректы старых доменов (studyinczech.tk/.net) — на уровне nginx
 - [x] ~~Переключение DNS studycz.cz → VPS~~ — уже сделано: apex/www смотрят на 157.90.169.205,
       нужен только nginx-конфиг + certbot для сайта, когда фронт будет готов

@@ -1,4 +1,4 @@
-# Промпт для следующей сессии (миграция studycz) — Этап 1 (client): деплой сайта на VPS
+# Промпт для следующей сессии (миграция studycz) — Этап 7: аналитика и GDPR
 
 Продолжаем модернизацию studycz.cz по плану `docs/migration-plan-2026.md`.
 Сверь этот промпт с memory-файлом `studycz-migration-progress` — если расходятся, спроси меня.
@@ -32,37 +32,38 @@
 
 ## ГЛАВНОЕ: чего не хватает для запуска
 
-1. **Домен studycz.cz не верифицирован в Resend** — на юзере. Зайти на resend.com/domains,
-   добавить домен, положить выданные DKIM/SPF-записи в панель Wedos. Пока не сделано,
-   письма с `@studycz.cz` отбиваются («domain is not verified»), и пароль после регистрации
-   показывается человеку прямо в модалке вместо письма (это запасной путь, он работает).
-   Проверить после верификации: `node scripts/setup-email.js --list` и тестовая регистрация.
-2. **SPF `v=spf1 redirect=_spf.yandex.net`** и google-site-verification в оригинальном регистре
-   (`kCdhquuqnxGSVwEUlg8MUmt9T8yvrNLn2_eXmkjleR8`) — тоже на юзере, в Wedos.
+1. ~~Домен studycz.cz не верифицирован в Resend~~ — **СДЕЛАНО 2026-08-06**: записи Resend
+   (SPF+MX на `send.studycz.cz`, DKIM `resend._domainkey`) в зоне Wedos, домен верифицирован.
+   Проверено живой регистрацией на проде: письмо с паролем от noreply@studycz.cz пришло
+   во «Входящие» (не спам), смоук-юзер удалён из postgres.
+2. ~~SPF Яндекса на апексе~~ — **отменено решением юзера 2026-08-06**: корпоративная почта
+   переезжает с Яндекса на Wedos, SPF добавится тогда. Не предлагать.
+3. **google-site-verification всё ещё в lowercase** в зоне Wedos (проверено 2026-08-06) —
+   на юзере: поправить регистр на оригинал `kCdhquuqnxGSVwEUlg8MUmt9T8yvrNLn2_eXmkjleR8`
+   и нажать Apply Changes.
 
-## Текущий этап — деплой клиента на VPS
+## Деплой клиента — СДЕЛАН 2026-08-06, **https://studycz.cz публичен**
 
-**ВАЖНО: DNS уже указывает на VPS, сайт станет публичным сразу после первого деплоя.**
-Старый сайт сейчас намеренно лежит (apex/www отдают 404).
+- `/opt/studycz-client`, pm2 `studycz-client` порт **1342**, ecosystem.config.js в репо.
+- nginx `studycz-client`: апекс → 1342, www → 301 апекс, http → https, certbot (studycz.cz + www).
+- Вебхук revalidate заведён (строка в `strapi_webhooks`, секрет в `.env` клиента), проверен.
+- Смоук пройден целиком: 75 URL sitemap → 200, форма звонка, регистрация с реальным письмом,
+  вход, анкета, восстановление пароля end-to-end. Смоук-данные удалены (5 юзеров, 5 анкет,
+  0 call_requests). Lighthouse НЕ гоняли — хвост.
+- **Найден и обойдён баг Resend** (study-strapi `b3af4a2`+`6e2be19`): их конвейер не экранирует
+  `=` при quoted-printable — `=XX` съедался, ссылка сброса приходила с битым токеном. Почта
+  переведена со SMTP на HTTP API (локальный провайдер `providers/email-resend/index.js`),
+  в html `=`+hex-пара заменяется на `&#61;`. Подробности в комментариях провайдера.
 
-1. `/opt/studycz-client` — клон simon1400/study-client.
-2. `.env`: `STRAPI_URL=http://127.0.0.1:1341` (в обход nginx), `NEXT_PUBLIC_STRAPI_URL=https://admin.studycz.cz`,
-   `NEXT_PUBLIC_SITE_URL=https://studycz.cz`, секрет для `POST /api/revalidate`.
-3. pm2 `studycz-client` на свободном порту 13xx (проверить `ss -tlnp`), `pm2 save`.
-   Рассмотреть `output: 'standalone'` в next.config — на VPS так экономнее по памяти.
-4. nginx на studycz.cz + www по образцу `studycz-strapi` (security-headers, блок сканеров 444),
-   затем certbot.
-5. В Strapi завести вебхук на `https://studycz.cz/api/revalidate` (заголовок `x-revalidate-secret`),
-   чтобы публикация в CMS сбрасывала ISR-кеш.
-6. После выката прогнать: главную и все разделы, форму звонка, регистрацию (с реальным письмом),
-   вход, анкету, восстановление пароля, `/sitemap.xml`, `/robots.txt`, Lighthouse.
+## Текущий этап — 7: аналитика и GDPR
+
+- GA4 через `@next/third-parties`, consent mode v2 в существующем gdpr-баннере,
+  пиксели через GTM только после согласия.
 
 ## Потом
 
-- Этап 7 — аналитика и GDPR: GA4 через `@next/third-parties`, consent mode v2 в существующем
-  gdpr-баннере, пиксели через GTM после согласия.
-- Хвосты этапа 4: hreflang (вместе со вторым языком), next/image, секция «Наша медиатека»
-  (мёртвый Instagram API v1 → Graph API).
+- Хвосты: Lighthouse-прогон; hreflang (вместе со вторым языком); next/image;
+  секция «Наша медиатека» (мёртвый Instagram API v1 → Graph API).
 - Этап 8: 301-редиректы старых доменов, мониторинг + Sentry, закрыть Netlify/Mongo/Sanity.
 
 ## Грабли
@@ -80,5 +81,7 @@
   после развёртывания новой БД прогнать `node scripts/setup-email.js` и `setup-permissions.js`
 - TypeScript 6 проверяет side-effect импорты: css/scss объявлены в `src/types/styles.d.ts`
 - Не запускать `npm run build` при живом `npm run dev` — дерутся за `.next`, потом 404 на css
+- **Resend портит `=`+hex-пару в QP-частях писем** (и SMTP, и HTTP API) — критичные ссылки
+  только в html-части (там провайдер экранирует `&#61;`), атрибуты в письмах всегда квотировать
 - SSH на VPS по ключу (BatchMode ок), всё под root; диск 71% — картинки только в ImageKit
 - Повторный прогон миграции безопасен, но title филиалов не уникален (6 из 9 — «Украине»)
