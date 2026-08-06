@@ -19,6 +19,20 @@ const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 /** Resend ждёт массив адресов; Strapi может прислать строку. */
 const toArray = (value) => (Array.isArray(value) ? value : value ? [value] : undefined);
 
+/**
+ * Обход бага конвейера Resend (воспроизводится и через их HTTP API):
+ * HTML-часть письма помечается quoted-printable, но литеральный `=` не
+ * экранируется, и получатель декодирует `=XX` (XX — hex-пара) в один байт.
+ * Реальный кейс: ссылка `/reset-password?code=<hex-токен>` приходила с битым
+ * токеном без первых двух символов. Текстовая часть письма не страдает.
+ *
+ * Меняем только опасные `=` (за которыми ровно две hex-цифры) на entity
+ * `&#61;` — рендер у получателя не меняется, а байта `=` на проводе нет.
+ * ВАЖНО: атрибуты в HTML писем всегда квотировать (`width="600"`,
+ * не `width=600`) — незаквотированное hex-значение попадёт под замену.
+ */
+const escapeQpLandmines = (html) => html.replace(/=(?=[0-9a-fA-F]{2})/g, '&#61;');
+
 module.exports = {
   init(providerOptions = {}, settings = {}) {
     const apiKey = providerOptions.apiKey;
@@ -36,7 +50,7 @@ module.exports = {
           to: toArray(to),
           subject,
           ...(text ? { text } : {}),
-          ...(html ? { html } : {}),
+          ...(html ? { html: escapeQpLandmines(html) } : {}),
           ...(toArray(cc) ? { cc: toArray(cc) } : {}),
           ...(toArray(bcc) ? { bcc: toArray(bcc) } : {}),
           ...(replyTo || settings.defaultReplyTo
