@@ -59,6 +59,14 @@
 
 - GA4 через `@next/third-parties`, consent mode v2 в существующем gdpr-баннере,
   пиксели через GTM только после согласия.
+- Разведка уже сделана (2026-08-06): **GTM `GTM-M3HKN8D` и Яндекс.Метрика `53724796`
+  (с вебвизором) уже вставлены в `src/app/[locale]/layout.tsx` и грузятся безусловно** —
+  как на старом сайте (public/index.html). Отдельного GA4-идентификатора в коде нет,
+  GA живёт внутри GTM-контейнера. Задача: consent default denied до загрузки GTM
+  (инлайн-скрипт в начале body), «Принять»/отказ в `components/layout/Gdpr.tsx`
+  (сейчас там только крестик и localStorage `agree_gdpr`), Метрику грузить только после
+  согласия (она consent mode не понимает), события `registration` и `call_request`
+  в dataLayer из `modals/RegistrationModal.tsx`, `modals/CallModal.tsx`, `home/CallForm.tsx`.
 
 ## Потом
 
