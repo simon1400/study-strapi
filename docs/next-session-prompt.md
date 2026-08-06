@@ -1,4 +1,4 @@
-# Промпт для следующей сессии (миграция studycz) — Этап 7: аналитика и GDPR
+# Промпт для следующей сессии (миграция studycz) — хвосты и этап 8
 
 Продолжаем модернизацию studycz.cz по плану `docs/migration-plan-2026.md`.
 Сверь этот промпт с memory-файлом `studycz-migration-progress` — если расходятся, спроси меня.
@@ -55,24 +55,29 @@
   переведена со SMTP на HTTP API (локальный провайдер `providers/email-resend/index.js`),
   в html `=`+hex-пара заменяется на `&#61;`. Подробности в комментариях провайдера.
 
-## Текущий этап — 7: аналитика и GDPR
+## Этап 7 (аналитика и GDPR) — код готов 2026-08-06, коммит study-client `3863b44`
 
-- GA4 через `@next/third-parties`, consent mode v2 в существующем gdpr-баннере,
-  пиксели через GTM только после согласия.
-- Разведка уже сделана (2026-08-06): **GTM `GTM-M3HKN8D` и Яндекс.Метрика `53724796`
-  (с вебвизором) уже вставлены в `src/app/[locale]/layout.tsx` и грузятся безусловно** —
-  как на старом сайте (public/index.html). Отдельного GA4-идентификатора в коде нет,
-  GA живёт внутри GTM-контейнера. Задача: consent default denied до загрузки GTM
-  (инлайн-скрипт в начале body), «Принять»/отказ в `components/layout/Gdpr.tsx`
-  (сейчас там только крестик и localStorage `agree_gdpr`), Метрику грузить только после
-  согласия (она consent mode не понимает), события `registration` и `call_request`
-  в dataLayer из `modals/RegistrationModal.tsx`, `modals/CallModal.tsx`, `home/CallForm.tsx`.
+- Consent mode v2: инлайн default denied первым в body, GTM через `@next/third-parties`,
+  GA4 (`G-DZS0LVWEBS`) внутри GTM молчит до согласия — проверено браузерным смоуком.
+- Баннер `Gdpr.tsx`: «Принять»/«Отказаться», localStorage `agree_gdpr`, логика в
+  `src/lib/analytics.ts` (consent update + событие `consent_granted` для пикселей в GTM).
+- Метрика в `components/YandexMetrika.tsx`, грузится только после согласия.
+- События `registration` и `call_request` пушатся в dataLayer после успешной отправки форм.
 
-## Потом
+## ПЕРВЫМ ДЕЛОМ: задеплоить этап 7 на VPS
 
+SSH из прошлой сессии блокировался пермишенами — если снова, дать команду юзеру:
+`ssh root@157.90.169.205 "cd /opt/studycz-client && git pull && npm install && npm run build && pm2 restart studycz-client"`
+После — смоук на https://studycz.cz: в HTML есть `consent','default'`, баннер с двумя
+кнопками, Метрика не грузится до согласия.
+
+## Дальше — хвосты и этап 8
+
+- На юзере в GTM: триггеры пикселей (Meta и др.) повесить на событие `consent_granted`.
 - Хвосты: Lighthouse-прогон; hreflang (вместе со вторым языком); next/image;
   секция «Наша медиатека» (мёртвый Instagram API v1 → Graph API).
-- Этап 8: 301-редиректы старых доменов, мониторинг + Sentry, закрыть Netlify/Mongo/Sanity.
+- Этап 8: 301-редиректы старых доменов (studyinczech.tk/.net) в nginx, мониторинг + Sentry,
+  закрыть Netlify/Mongo/Sanity.
 
 ## Грабли
 

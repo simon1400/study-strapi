@@ -238,10 +238,22 @@ Content-types (маппинг из Sanity, все контентные — с i1
       с битым токеном. Почта переведена со SMTP на HTTP API (локальный провайдер
       `providers/email-resend/index.js`), опасные `=` в html заменяются на `&#61;`
 
-### Этап 7 — Аналитика и GDPR
-- GTM + GA4 через `@next/third-parties`; события форм (регистрация, звонок)
-- Cookie-consent баннер (перенести имеющийся gdpr-компонент, подключить к consent mode v2)
-- Пиксели (Meta и др.) — через GTM после consent
+### Этап 7 — Аналитика и GDPR — код готов 2026-08-06 (study-client `3863b44`)
+- [x] Consent mode v2: инлайн-скрипт первым в body ставит default **denied** по всем четырём
+      сигналам до загрузки GTM; если `agree_gdpr=true` с прошлого визита — сразу granted
+- [x] GTM `GTM-M3HKN8D` через `@next/third-parties` (`<GoogleTagManager>`); GA4 живёт внутри
+      контейнера (`G-DZS0LVWEBS`) и до согласия молчит — проверено в браузере: `page_view`
+      уходит только после «Принять»
+- [x] Gdpr-баннер: кнопки «Принять»/«Отказаться» вместо крестика; решение в localStorage
+      `agree_gdpr` ('true'/'false'), клик шлёт `consent update` + событие `consent_granted`
+      (триггер для пикселей в GTM). Логика в `src/lib/analytics.ts`
+- [x] Яндекс.Метрика 53724796 вынесена в `<YandexMetrika>` и грузится **только после согласия**
+      (consent mode она не понимает); у согласившихся ранее — автоматом при заходе
+- [x] События `registration` (RegistrationModal) и `call_request` (CallModal + CallForm на
+      главной) пушатся в dataLayer после успешной отправки
+- [ ] **Деплой на VPS** (SSH из сессии заблокирован): `cd /opt/studycz-client && git pull &&
+      npm install && npm run build && pm2 restart studycz-client`
+- [ ] На юзере в GTM: триггеры пикселей (Meta и др.) повесить на событие `consent_granted`
 
 ### Этап 8 — Запуск и вывод старого
 - [ ] Прогон: URL/формы/письма/ЛК прогнаны 2026-08-06 при деплое клиента; остался **Lighthouse**
